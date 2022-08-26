@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+
+    <link
+      rel="stylesheet"
+      href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
+      integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm"
+      crossorigin="anonymous"
+    />
+
+    <link rel="stylesheet" href="styles.css" />
+
+    <title>Search Movies!</title>
+    
+  </head>
+  <body>
+    <div class="header_input m-auto">
+      <h1 class="text-center mt-3 bg-dark p-2 mb-5" id="header">
+        Movieology
+      </h1>
+
+      <form autocomplete="off" id="movie-form">
+        <div class="input-group mb-3">
+          <div class="input-group-prepend">
+            <span class="input-group-text" id="basic-addon3">Enter Title</span>
+          </div>
+          <input
+            type="text"
+            class="form-control"
+            id="movie-input"
+            aria-describedby="basic-addon3"
+            autofocus
+          />
+        </div>
+      </form>
+    
+      <div id="tooltip" class="tootltip alert alert-info alert-dismissible fade show" role="alert">
+        Now you can click on Poster to check summary!
+        <button type="button" id="close-tooltip" class="close" data-dismiss="alert" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+
+    </div>
+
+    <div class="error">
+      <div class="alert alert-warning alert-dismissible fade show" role="alert">
+        <strong>Movie Not Found!</strong> Please Try typing the full Movie
+        Title,<span id="red_color">
+          <strong>Remember Spaces are also considered</strong></span
+        >
+        <button
+          type="button"
+          class="close"
+          data-dismiss="alert"
+          aria-label="Close"
+        >
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+    </div>
+    <!-- <div class="empty_input d-none">
+      <div class="alert alert-warning alert-dismissible fade show" role="alert">
+        <strong>Title Can't Be Empty
+        <button
+          type="button"
+          class="close"
+          data-dismiss="alert"
+          aria-label="Close"
+        >
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+    </div> -->
+
+    <div class="anim"></div>
+
+    <div class="output_container">
+      <div id="rating"></div>
+      <div id="result"></div>
+
+      <div class="modal" id="modal" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">Summary</h5>
+              <button
+                type="button"
+                class="close"
+                data-dismiss="modal"
+                aria-label="Close"
+              >
+                <span aria-hidden="true" id="close-x" class="close-x">X</span>
+              </button>
+            </div>
+            <div class="modal-body" id="modal-body"></div>
+            <div class="modal-footer">
+              <button
+                
+                type="button"
+                id="close-btn"
+                class="btn btn-secondary"
+                data-dismiss="modal"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      
+
+      $("#close-tooltip").click(function(){
+          $("#tooltip").fadeOut();
+
+      })
+      
+      setTimeout(function(){
+       $('.tootltip').remove();
+      }, 5000);
+      
+      $body = $("body");
+
+
+      $(document).on({
+        ajaxStart: function () {
+          $body.addClass("loading");
+        },
+        ajaxStop: function () {
+          $body.removeClass("loading");
+        },
+      });
+
+      // preventing form default submission
+      $("form").keypress(function (e) {
+        //Enter key
+        if (e.which == 13) {
+          return false;
+        }
+      });
+
+
+      // close alert
+      $(".close").click(function () {
+        $(".error").fadeOut();
+        // $(".alert").fadeOut();
+      });
+
+      
+      $(".error").css("display", "none");
+
+     
+
+      $(document).ready(function () {
+        $("#movie-input").on("keyup", function () {
+          var apiKey = config.ApiKey;
+
+          var movie = $("#movie-input").val();
+          if (movie) {
+
+            var result = "";
+
+            var url = "https://www.omdbapi.com/?apikey=" + apiKey;
+
+            $.ajax({
+              method: "GET",
+              url: url + "&t=" + movie,
+              success: function (data) {
+                if (data.Title == undefined) {
+                  $(".output_container").css("display", "none");
+                  console.log("nope");
+                  $(".error").css("display", "block");
+                } else {
+                  $(".error").css("display", "none");
+                  $(".output_container").css("display", "block");
+                  var rating = `
+                <h2 style="margin:0 auto" class="w-30 p-3 mb-3 border border-warning rounded">${data.Title}</h2>
+                <p class="badge badge-pill badge-dark p-2" >imdb Rating : ${data.imdbRating}</p>
+                <p class="badge badge-pill badge-secondary p-2">imdb votes : ${data.imdbVotes}</p>
+                `;
+
+                  result = `
+
+                <img id="poster" alt = "image not available" class="img-thumbnail mb-2 mx-auto rounded d-block mr-2" src="${data.Poster}"></img>
+
+              <ul class="list-group mt-2 mb-3">
+                <li class="list-group-item"><strong>Actors </strong>: ${data.Actors}</li>
+                <li class="list-group-item"><strong>Genre </strong> : ${data.Genre}</li>
+                <li class="list-group-item"><strong>Type </strong>: ${data.Type}</li>
+                <li class="list-group-item"><strong>Runtime </strong>: ${data.Runtime}</li>
+                <li class="list-group-item"><strong>Language </strong>: ${data.Language}</li>
+                <li class="list-group-item"><strong>Release Date </strong>: ${data.Released}</li>
+                <li class="list-group-item"><strong>Awards </strong>: ${data.Awards}</li>
+                <li class="list-group-item"><strong>Writers </strong>: ${data.Writer}</li>
+                <li class="list-group-item"><strong>Country </strong>: ${data.Country}</li>
+                </ul>
+                `;
+
+                  var plot = `
+                  <p>${data.Plot}</p>
+              `;
+                  $("#result").html(result);
+                  $("#rating").html(rating);
+
+                  $("#poster").click(function () {
+                    $("#modal-body").html(plot);
+                    $("#modal").css("display", "block");
+                  });
+                }
+              },
+             
+            });
+          }
+        });
+      });
+    </script>
+    <script type="text/javascript" src="config.js"></script>
+    <script type="text/javascript" src="main.js"></script>
+  </body>
+</html>
